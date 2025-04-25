@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ruff cache
+.ruff_cache/
+
+# Mypy cache
+.mypy_cache/
+
+.no-docker
+
+# Pyproject
+pyproject.toml
+
+# Compiler output
+**/tmp/
