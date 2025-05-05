@@ -12,17 +12,33 @@ def add_prelude_and_conclusion(p: src.Program, reg_alloc: RegAllocOutput) -> tgt
     prefix: tgt.Program = ilist(
         tgt.DGlobal(Label("main")),
         Label("main"),
-        tgt.Store(ra, tgt.Offset(sp, -8)),
-        tgt.Store(fp, tgt.Offset(sp, -16)),
-        tgt.IInstr2("addi", fp, sp, 0),
         tgt.IInstr2("addi", sp, sp, -offset),
+        tgt.Store(ra, tgt.Offset(sp, offset - 8)),
+        tgt.Store(fp, tgt.Offset(sp, offset - 16)),
+    )
+
+    _offset = 16
+    for r in reg_alloc.callee_saved:
+        _offset += 8
+        prefix += ilist(tgt.Store(r, tgt.Offset(sp, offset - _offset)))
+
+    prefix += ilist(
+          tgt.IInstr2("addi", fp, sp, offset),
     )
 
     suffix: tgt.Program = ilist(
         tgt.IInstr2("addi", a0, zero, 0),
+        tgt.Load(ra, tgt.Offset(fp, -8)),
+        tgt.Load(fp, tgt.Offset(fp, -16)),
+    )
+
+    _offset = 16
+    for r in reg_alloc.callee_saved:
+        _offset += 8
+        suffix += ilist(tgt.Load(r, tgt.Offset(fp, -_offset)))
+
+    suffix += ilist(
         tgt.IInstr2("addi", sp, sp, offset),
-        tgt.Load(ra, tgt.Offset(sp, -8)),
-        tgt.Load(fp, tgt.Offset(sp, -16)),
         tgt.Return(),
     )
 
