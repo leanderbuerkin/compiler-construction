@@ -54,7 +54,7 @@ class PriorityQueue[T]:
         """
         Returns True if the heap is empty, False otherwise
         """
-        return bool(self._heap)
+        return not bool(self._heap)
 
     def __bool__(self) -> bool:
-        return self.is_empty()
+        return not self.is_empty()
