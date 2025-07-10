@@ -37,7 +37,7 @@ def optimize_block(block: src.Block) -> tgt.Block:
     block_out2: src.Block = ilist()
     i = 0
     while i < len(block_out1):
-        match block[i]:
+        match block_out1[i]:
             case src.Move(dst1, src1):
                 ...
             case _:
