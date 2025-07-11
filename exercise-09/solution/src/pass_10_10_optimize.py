@@ -58,7 +58,7 @@ def optimize_block(block: src.Block) -> tgt.Block:
                     case "xor":
                         val_out = val1 != val2
                     case "sltu":
-                        val_out = abs(val1) < abs(val2)
+                        val_out = abs(val1 & 0xFFFFFFFFFFFFFFFF) < abs(val2 & 0xFFFFFFFFFFFFFFFF)
                     case "slt":
                         val_out = val1 < val2
                     case "and":
