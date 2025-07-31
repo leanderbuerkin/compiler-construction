@@ -64,7 +64,7 @@ def compute_prelude(reg_alloc: RegAllocOutput, is_main: bool) -> tgt.Program:
     _offset = 16
     for r in reg_alloc.callee_saved:
         _offset += 8
-        prelude += ilist(tgt.Store(r, tgt.Offset(sp, -_offset)))
+        prelude += ilist(tgt.Store(r, tgt.Offset(fp, -_offset)))
 
     if is_main:
         # Zero all calle saved registers in main, such that
@@ -89,25 +89,25 @@ def compute_conclusion(reg_alloc: RegAllocOutput, is_main: bool, is_tail_call: b
     offset = align(16, reg_alloc.offset_sp)
 
     conclusion: tgt.Program = ilist()
-
-    if is_main:
-        conclusion += ilist(
-            tgt.IInstr2("addi", a0, zero, 0),
-        )
-
-    conclusion += ilist(
-        tgt.Load(ra, tgt.Offset(fp, -8)),
-        tgt.Load(fp, tgt.Offset(fp, -16)),
-    )
-
+        
     _offset = 16
     for r in reg_alloc.callee_saved:
         _offset += 8
         conclusion += ilist(tgt.Load(r, tgt.Offset(fp, -_offset)))
 
     conclusion += ilist(
+        tgt.Load(ra, tgt.Offset(fp, -8)),
+        tgt.Load(fp, tgt.Offset(fp, -16)),
+    )
+
+    conclusion += ilist(
         tgt.IInstr2("addi", sp, sp, offset)
     )
+
+    if is_main:
+        conclusion += ilist(
+            tgt.IInstr2("addi", a0, zero, 0),
+        )
 
     if not is_tail_call:
         conclusion += ilist(tgt.Return())
