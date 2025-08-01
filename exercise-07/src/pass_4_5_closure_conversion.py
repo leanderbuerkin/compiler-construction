@@ -1,3 +1,4 @@
+from ast import Tuple
 import ast_4_conv_ass as src
 import ast_5_closures as tgt
 from identifier import Id
@@ -16,7 +17,7 @@ def closure_conv(p: src.Program) -> tgt.Program:
 def closure_conv_decl(decls_out: list[tgt.Decl], d: src.Decl):
     match d:
         case src.DFun(name, params, body):
-            ...
+            tgt.DFun(name, params, closure_conv_stmts(decls_out, body))
 
 def closure_conv_stmts(decls_out: list[tgt.Decl], ss: IList[src.Stmt]) -> IList[tgt.Stmt]:
     return IList([closure_conv_stmt(decls_out, s) for s in ss])
@@ -80,11 +81,45 @@ def closure_conv_expr(decls_out: list[tgt.Decl], e: src.Expr) -> tgt.Expr:
         case src.ETupleLen(e):
             return tgt.ETupleLen(closure_conv_expr(decls_out, e))
         case src.ECall(e_func, e_args):
-            ...
+            # always returns a closure as Tuple through the following branch src.EFunRef
+            e_func_out = closure_conv_expr(decls_out, e_func)
+            e_args_out = closure_conv_exprs(decls_out, e_args)
+            # The Tuple itself can not be given to the tgt.Call,
+            # we need a reference to reference it through a variable
+            tmp = Id.fresh("function_body")
+            return tgt.EBegin(
+                ilist(tgt.SAssign(tgt.LId(tmp), e_func_out)),
+                tgt.ECall(tgt.ETupleAccess(tgt.EVar(tmp), 0), ilist(tgt.EVar(tmp)) + e_args_out),
+            )
         case src.EFunRef(name):
-            ...
+            return tgt.ETuple(ilist(tgt.EFunRef(name)))
         case src.ELambda(params, body, fvs):
-            ...
+            function_body_label = Label.fresh("function body")
+            closure = get_closure(function_body_label, fvs)
+
+            closure_id = Id.fresh("closure with all the live variables")
+            fun_body = get_free_variables_from_closure_to_function_body(fvs, closure_id)
+
+            fun_body += ilist(tgt.SReturn(closure_conv_expr(decls_out, body)))
+
+            new_params = ilist(closure_id) + params
+            decls_out.append(tgt.DFun(function_body_label, new_params, fun_body))
+
+            return tgt.ETuple(closure)
+
+def get_closure(function_body_label: Label, fvs: IList[Id]) -> IList[tgt.Expr]:
+    closure: IList[tgt.Expr] = ilist(tgt.EFunRef(function_body_label))
+    for x in fvs:
+        closure += ilist(tgt.EVar(x))
+    return closure
+
+def get_free_variables_from_closure_to_function_body(fvs: IList[Id], closure_id: Id) -> IList[tgt.Stmt]:
+    fun_body: IList[tgt.Stmt] = ilist()
+    for i, x in enumerate(fvs):
+        fun_body += ilist(
+            tgt.SAssign(tgt.LId(x), tgt.ETupleAccess(tgt.EVar(closure_id), i+1))
+        )
+    return fun_body
 
 def closure_conv_exprs(decls_out: list[tgt.Decl], es: IList[src.Expr]) -> IList[tgt.Expr]:
     return IList([closure_conv_expr(decls_out, e) for e in es])
