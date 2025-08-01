@@ -7,6 +7,10 @@ def riscv_01() -> int:
     
     Returns:
         The number of bytes that the stack pointer has to be lowered to accomodate the stack frame.
+
+    3 Variables need 8*3=24 bytes
+    return address and frame pointer need 2*8=16 bytes
+    40 bytes aligned for 16 bytes equals 48 bytest
     """
     return 48
 

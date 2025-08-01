@@ -34,9 +34,6 @@ def uniquify_decl(renaming: dict[Id, Id], d: src.Decl) -> tgt.Decl:
 def get_copy_without_params(renaming: dict[Id, Id], params: IList[Id]
                             ) -> dict[Id, Id]:
     global_scope = renaming.copy()
-    for param in params:
-        # is useless because they get overwritten anyway
-        del global_scope[param]
     return global_scope
 
 def rename_params(renaming: dict[Id, Id], params: IList[Id]) -> IList[Id]:
